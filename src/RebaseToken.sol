@@ -79,12 +79,27 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         emit InterestRateSet(_newInterestRate);
     }
 
-    function mint(address _to, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
+    /**
+     *
+     * @notice Mints new tokens for a given address. Called when a user either deposits or bridges tokens to this chain.
+     * @param _to The address to mint the tokens to.
+     * @param _amount The number of tokens to mint.
+     * @param _userInterestRate The interest rate of the user. This is either the contract interest rate if the user is depositing or the user's interest rate from the source token if the user is bridging.
+     * @dev this function increases the total supply.
+     */
+    function mint(address _to, uint256 _amount, uint256 _userInterestRate) external onlyRole(MINT_AND_BURN_ROLE) {
         _mintAccruedInterest(_to);
-        s_userInterestRate[_to] = s_interestRate;
+        s_userInterestRate[_to] = _userInterestRate;
         super._mint(_to, _amount);
     }
 
+    /**
+     *
+     * @notice Burns tokens from the sender.
+     * @param _from The address to burn the tokens from.
+     * @param _amount The number of tokens to be burned
+     * @dev this function decreases the total supply.
+     */
     function burn(address _from, uint256 _amount) external onlyRole(MINT_AND_BURN_ROLE) {
         if (_amount == type(uint256).max) {
             _amount = balanceOf(_from);
@@ -222,7 +237,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @return the principal balance of the user
      *
      */
-    function principleBalanceOf(address _user) external view returns (uint256) {
+    function principalBalanceOf(address _user) external view returns (uint256) {
         return super.balanceOf(_user);
     }
 
